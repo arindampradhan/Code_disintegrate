@@ -1,0 +1,3 @@
+[submodule "howdoi"]
+	path = howdoi
+	url = https://github.com/gleitz/howdoi.git

@@ -51,13 +51,17 @@ def get_links(query):
 	# calling get_result for answers 
 	result = get_result(SEARCH_URL.format(URL,url_quote(query)))
 	html = pq(result)
-	return 
+	return [a.attrib['href'] for a in html)'.l']
 
 
 def get_result(url):
 	try:
 		# requsting the related urls
-		requests.get(url, headers={'User-Agent': random.choice(USER_AGENTS)}, proxies=get_proxies()).text
+		return requests.get(url, headers={'User-Agent': random.choice(USER_AGENTS)}, proxies=get_proxies()).text
+	except requests.exceptions.SSLError as e:
+		print('[ERROR] Encountered an SSL Error. Try using HTTP instead of '
+              'HTTPS by setting the environment variable "HOWDOI_DISABLE_SSL".\n')
+        raise e
 
 
 
@@ -69,7 +73,7 @@ def get_result(url):
 
 def get_instructions(args):
 	links = get_links(args['query'])
-	
+	"""sends a string of query with \'?\' deleted"""
 	if not links:
 		return False
 
@@ -91,8 +95,8 @@ def clear_cache():
 
 
 def howdoi(args):
-	# args is a dictionary and here the query tag's element is changed 
-	# so as to remove ? character 
+	"""args is a dictionary and here the query tag's element is changed 
+	joining all the elements in list by spaces and removing ? character""" 
 	args['query']=' '.join(args['query']).replace('?','')
 	
 		# calling get_instructions if not found give a sorry statement
@@ -177,3 +181,22 @@ args is a directory
 
 
 
+args = {'query':["all",'that','i','asked']}
+
+howdoi
+	|-------join the query list with spaces
+	|			|------list is now a string with spaces 'query':"all that i asked"
+	|-------try---get_instructions(args)
+	|				|------link->get_link(args[query_string])
+	|								|---->>>
+	|
+	|-------except ConnectionError
+
+
+>>>get_link("single string of the name you gave as args"):
+	|----result=get_result(SEARCH_URL.format(URL,url_quote(query)))
+	|			|---
+	|
+	|----html = pq(result)
+	|----return [a.attrib['href'] for a in html('.l')] or \
+        [a.attrib['href'] for a in html('.r')('a')]

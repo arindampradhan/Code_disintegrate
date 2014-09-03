@@ -45,7 +45,7 @@ else:
 # def get_proxies():
 
 
-# def is_question(link):
+
 
 def get_links(query):
 	# calling get_result for answers 
@@ -64,15 +64,64 @@ def get_result(url):
         raise e
 
 
+#from get_answer
+def get_link_at_pos(links, position):
+    links = [link for link in links if is_question(link)]
+    if not links:
+        return False
 
-# def get_link_at_pos(links,position):
+    if len(links) >= position:
+        link = links[position-1]
+    else:
+        link = links[-1]
+    return link
+
+
+#searching for the following question in following links
+def is_question(link):
+    return re.search('questions/\d+/', link)
 
 # def format_output(code,args):
 
-# def get_answer(args,links):
+def get_answer(args, links):
+    link = get_link_at_pos(links, args['pos'])
+
+    if not link:
+        return False
+    if args.get('link'):
+        return link
+    page = get_result(link + '?answertab=votes')
+    html = pq(page)
+
+    first_answer = html('.answer').eq(0)
+    instructions = first_answer.find('pre') or first_answer.find('code')
+    args['tags'] = [t.text for t in html('.post-tag')]
+
+    if not instructions and not args['all']:
+        text = first_answer.find('.post-text').eq(0).text()
+    elif args['all']:
+        texts = []
+        for html_tag in first_answer.items('.post-text > *'):
+            current_text = html_tag.text()
+            if current_text:
+                if html_tag[0].tag in ['pre', 'code']:
+                    texts.append(format_output(current_text, args))
+                else:
+                    texts.append(current_text)
+        texts.append('\n---\nAnswer from {0}'.format(link))
+        text = '\n'.join(texts)
+    else:
+        text = format_output(instructions.eq(0).text(), args)
+    if text is None:
+        text = NO_ANSWER_MSG
+    text = text.strip()
+    return text
+
 
 def get_instructions(args):
 	links = get_links(args['query'])
+	# links are a list of href and website lists from the query
+
 	"""sends a string of query with \'?\' deleted"""
 	if not links:
 		return False
@@ -181,22 +230,27 @@ args is a directory
 
 
 
-args = {'query':["all",'that','i','asked']}
+# args = {'query':["all",'that','i','asked']}
 
-howdoi
-	|-------join the query list with spaces
-	|			|------list is now a string with spaces 'query':"all that i asked"
-	|-------try---get_instructions(args)
-	|				|------link->get_link(args[query_string])
-	|								|---->>>
-	|
-	|-------except ConnectionError
+# howdoi
+# 	|-------join the query list with spaces
+# 	|			|------list is now a string with spaces 'query':"all that i asked"
+# 	|-------try---get_instructions(args)
+# 	|				|------link->get_link(args[query_string])
+# 	|								|---->>>
+# 	|
+# 	|-------except ConnectionError
 
 
->>>get_link("single string of the name you gave as args"):
-	|----result=get_result(SEARCH_URL.format(URL,url_quote(query)))
-	|			|---
-	|
-	|----html = pq(result)
-	|----return [a.attrib['href'] for a in html('.l')] or \
-        [a.attrib['href'] for a in html('.r')('a')]
+# >>>get_link("single string of the name you gave as args"):
+# 	|----result=get_result(SEARCH_URL.format(URL,url_quote(query)))
+# 	|			|---
+# 	|
+# 	|----html = pq(result)
+# 	|			|----import pyquery as pq
+# 	|----return [a.attrib['href'] for a in html('.l"')] or \
+#         [a.attrib['href'] for a in html('.r')('a')"]
+#         # """returns a list of references for reasult return href of a tag"""
+
+
+
